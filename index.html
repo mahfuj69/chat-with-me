@@ -14,7 +14,6 @@
       height: 100vh;
       overflow: hidden;
     }
-
     header {
       background: #0088cc;
       color: #fff;
@@ -23,7 +22,6 @@
       font-size: 18px;
       font-weight: 600;
     }
-
     #messages {
       flex: 1;
       overflow-y: auto;
@@ -31,7 +29,6 @@
       display: flex;
       flex-direction: column;
     }
-
     .msg {
       max-width: 75%;
       padding: 10px 14px;
@@ -42,19 +39,16 @@
       display: inline-block;
       font-size: 15px;
     }
-
     .mine {
       align-self: flex-end;
       background: #dcf8c6;
       border-bottom-right-radius: 2px;
     }
-
     .theirs {
       align-self: flex-start;
       background: #fff;
       border-bottom-left-radius: 2px;
     }
-
     .time {
       display: block;
       text-align: right;
@@ -62,7 +56,6 @@
       color: #777;
       margin-top: 3px;
     }
-
     form {
       display: flex;
       padding: 8px;
@@ -71,7 +64,6 @@
       position: sticky;
       bottom: 0;
     }
-
     #msgInput {
       flex: 1;
       padding: 10px;
@@ -81,7 +73,6 @@
       outline: none;
       margin-right: 8px;
     }
-
     #sendBtn {
       background: #0088cc;
       color: white;
@@ -92,50 +83,32 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-
     #sendBtn:hover {
       background: #007ab8;
-    }
-
-    @media (max-width: 600px) {
-      header {
-        font-size: 16px;
-        padding: 10px;
-      }
-      #msgInput {
-        font-size: 14px;
-      }
-      #sendBtn {
-        padding: 8px 12px;
-      }
-      .msg {
-        font-size: 14px;
-      }
     }
   </style>
 </head>
 <body>
   <header>💬 Chat With Me</header>
   <div id="messages"></div>
-
   <form id="msgForm">
     <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
     <button id="sendBtn" type="submit">Send</button>
   </form>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getDatabase,
       ref,
       push,
       onChildAdded,
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCqgCqfJwKkDTM7K5hgcB3QoG1yZa7Z4Qg",
       authDomain: "chat-with-me-69.firebaseapp.com",
-      databaseURL: "https://chat-with-me-69-default-rtdb.firebaseio.com",
+      databaseURL: "https://chat-with-me-69-default-rtdb.firebaseio.com/",
       projectId: "chat-with-me-69",
       storageBucket: "chat-with-me-69.appspot.com",
       messagingSenderId: "792582367915",
@@ -149,8 +122,7 @@
     const messagesDiv = document.getElementById("messages");
     const msgForm = document.getElementById("msgForm");
     const msgInput = document.getElementById("msgInput");
-
-    const username = "mahfuj69"; // your username
+    const username = prompt("Enter your name:", "mahfuj69") || "Guest";
 
     msgForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -167,9 +139,8 @@
     onChildAdded(messagesRef, (data) => {
       const msg = data.val();
       const div = document.createElement("div");
-      div.classList.add("msg");
-      div.classList.add(msg.user === username ? "mine" : "theirs");
-      div.innerHTML = `${msg.text}<span class="time">${msg.time}</span>`;
+      div.classList.add("msg", msg.user === username ? "mine" : "theirs");
+      div.innerHTML = `<b>${msg.user}:</b> ${msg.text}<span class="time">${msg.time}</span>`;
       messagesDiv.appendChild(div);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
