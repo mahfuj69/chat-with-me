@@ -14,6 +14,7 @@
       flex-direction: column;
       height: 100vh;
     }
+
     #messages {
       flex: 1;
       overflow-y: auto;
@@ -22,25 +23,38 @@
       flex-direction: column;
       gap: 8px;
     }
+
     .message {
       padding: 10px 14px;
       border-radius: 10px;
-      max-width: 80%;
+      max-width: 75%;
       word-wrap: break-word;
       background-color: #1a1a1a;
-      border: 2px solid;
     }
+
+    .me {
+      align-self: flex-end;
+      background-color: #1f1f1f;
+    }
+
+    .other {
+      align-self: flex-start;
+    }
+
     .username {
       font-size: 12px;
-      opacity: 0.8;
+      opacity: 0.9;
       margin-bottom: 4px;
+      font-weight: bold;
     }
+
     #inputArea {
       display: flex;
       padding: 10px;
       background-color: #111;
       border-top: 1px solid #333;
     }
+
     #messageInput {
       flex: 1;
       padding: 10px;
@@ -50,6 +64,7 @@
       color: white;
       outline: none;
     }
+
     #sendBtn {
       background-color: #333;
       color: white;
@@ -59,6 +74,7 @@
       border-radius: 6px;
       cursor: pointer;
     }
+
     #sendBtn:hover {
       background-color: #444;
     }
@@ -89,7 +105,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Generate random username and consistent color
+    // Generate consistent local username and color
     let username = localStorage.getItem("username");
     let userColor = localStorage.getItem("userColor");
 
@@ -125,7 +141,7 @@
       const msg = snapshot.val();
       const msgDiv = document.createElement("div");
       msgDiv.classList.add("message");
-      msgDiv.style.borderColor = msg.color;
+      msgDiv.classList.add(msg.username === username ? "me" : "other");
 
       msgDiv.innerHTML = `<div class="username" style="color:${msg.color};">${msg.username}</div>
                           <div>${msg.text}</div>`;
