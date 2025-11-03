@@ -3,146 +3,166 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat With Me</title>
+  <title>Nokia Chat</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: url('https://www.toptal.com/designers/subtlepatterns/paper_fibers.png');
-      background-size: cover;
+      font-family: 'Courier New', monospace;
+      background-color: #b0c48c;
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden;
+      border: 5px solid #2e2e2e;
+      box-shadow: inset 0 0 0 3px #fff;
     }
+
+    header {
+      background: #2e2e2e;
+      color: #9de27a;
+      text-align: center;
+      padding: 6px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      border-bottom: 2px solid #111;
+    }
+
     .chat-container {
       flex: 1;
       overflow-y: auto;
       padding: 10px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding-bottom: 80px;
+      background: repeating-linear-gradient(
+        to bottom,
+        #b0c48c,
+        #b0c48c 19px,
+        #a7bb84 20px
+      );
     }
+
     .bubble {
-      max-width: 70%;
-      padding: 10px 14px;
-      border-radius: 18px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      position: relative;
+      max-width: 80%;
+      margin: 4px 0;
+      padding: 8px;
+      border: 2px solid #2e2e2e;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.2;
       word-wrap: break-word;
     }
+
     .mine {
-      background: #dcf8c6;
       align-self: flex-end;
+      background: #9de27a;
     }
+
     .theirs {
-      background: #fff;
       align-self: flex-start;
+      background: #c6dca3;
     }
-    .time {
-      font-size: 11px;
-      color: #666;
-      text-align: right;
-      margin-top: 4px;
-    }
-    .bottom-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #fdf7e3;
-      border-top: 1px solid #ddd;
+
+    .input-area {
       display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      box-sizing: border-box;
+      padding: 8px;
+      border-top: 2px solid #2e2e2e;
+      background: #a0b886;
     }
+
     input {
       flex: 1;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 25px;
-      font-size: 15px;
+      padding: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      border: 2px solid #2e2e2e;
+      border-radius: 4px;
+      outline: none;
+      background: #dce9c0;
     }
+
     button {
-      background: #25D366;
-      border: none;
-      color: white;
-      padding: 10px 16px;
-      border-radius: 50%;
-      font-size: 18px;
+      margin-left: 6px;
+      padding: 6px 12px;
+      font-family: 'Courier New', monospace;
+      background-color: #2e2e2e;
+      color: #9de27a;
+      border: 2px solid #9de27a;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 14px;
     }
-    .status {
-      text-align: center;
-      font-size: 12px;
-      color: gray;
-      margin-bottom: 3px;
+
+    button:active {
+      background-color: #111;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .cursor {
+      animation: blink 1s infinite;
     }
   </style>
 </head>
 <body>
-  <div class="chat-container" id="chat"></div>
-  <div class="status" id="status"></div>
-  <div class="bottom-bar">
-    <input id="msg" placeholder="Type your message..." oninput="typing()" onkeydown="if(event.key==='Enter') sendMessage()">
-    <button onclick="sendMessage()">➤</button>
+  <header>NOKIA CHAT 📟</header>
+
+  <div id="messages" class="chat-container"></div>
+
+  <div class="input-area">
+    <input id="messageInput" type="text" placeholder="Type message..." />
+    <button onclick="sendMessage()">SEND</button>
   </div>
 
-  <script>
-    const chatBox = document.getElementById('chat');
-    const msgInput = document.getElementById('msg');
-    const status = document.getElementById('status');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    let username = localStorage.getItem('username');
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcp0zUPYeODb_JJMWyKNxQpcaW7c2mZM8",
+      authDomain: "chat-with-me-1aa70.firebaseapp.com",
+      databaseURL: "https://chat-with-me-1aa70-default-rtdb.firebaseio.com",
+      projectId: "chat-with-me-1aa70",
+      storageBucket: "chat-with-me-1aa70.firebasestorage.app",
+      messagingSenderId: "1042127185759",
+      appId: "1:1042127185759:web:4f6f1b5705f05663f8b8ea",
+      measurementId: "G-3V2BNKNTYH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const messagesRef = ref(db, "messages");
+
+    let username = localStorage.getItem("username");
     if (!username) {
-      username = 'User-' + Math.floor(Math.random() * 10000);
-      localStorage.setItem('username', username);
+      username = "User" + Math.floor(Math.random() * 1000);
+      localStorage.setItem("username", username);
     }
 
-    const dbUrl = "https://chat-with-me-1aa70-default-rtdb.firebaseio.com/messages.json";
+    const messagesDiv = document.getElementById("messages");
+    const input = document.getElementById("messageInput");
 
-    async function loadMessages() {
-      const res = await fetch(dbUrl);
-      const data = await res.json() || {};
-      chatBox.innerHTML = "";
-      Object.values(data).forEach(msg => {
-        const div = document.createElement('div');
-        div.className = 'bubble ' + (msg.user === username ? 'mine' : 'theirs');
-        div.innerHTML = `<div>${msg.text}</div><div class="time">${msg.user} • ${msg.time}</div>`;
-        chatBox.appendChild(div);
-      });
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const text = msgInput.value.trim();
+    function sendMessage() {
+      const text = input.value.trim();
       if (!text) return;
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const msg = { user: username, text, time };
-      msgInput.value = "";
-      status.textContent = "";
-
-      await fetch(dbUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(msg)
+      push(messagesRef, {
+        name: username,
+        text: text,
+        time: new Date().toLocaleTimeString()
       });
-      loadMessages();
+      input.value = "";
     }
 
-    let typingTimeout;
-    function typing() {
-      status.textContent = "✍️ writing...";
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => status.textContent = "", 1000);
-    }
-
-    // Auto-refresh every 2s
-    setInterval(loadMessages, 2000);
-    loadMessages();
+    onChildAdded(messagesRef, (data) => {
+      const msg = data.val();
+      const div = document.createElement("div");
+      div.classList.add("bubble");
+      div.classList.add(msg.name === username ? "mine" : "theirs");
+      div.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}`;
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
   </script>
 </body>
 </html>
