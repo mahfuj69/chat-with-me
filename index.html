@@ -1,72 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chat With Me</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCqgCqfJwKkDTM7K5hgcB3QoG1yZa7Z4Qg",
-      authDomain: "chat-with-me-69.firebaseapp.com",
-      databaseURL: "https://chat-with-me-69-default-rtdb.firebaseio.com",
-      projectId: "chat-with-me-69",
-      storageBucket: "chat-with-me-69.appspot.com",
-      messagingSenderId: "792582367915",
-      appId: "1:792582367915:web:a6a0c9e5696b1fd873bf1b"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const messagesRef = ref(db, "messages");
-
-    const msgForm = document.getElementById("msgForm");
-    const msgInput = document.getElementById("msgInput");
-    const messagesDiv = document.getElementById("messages");
-
-    msgForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const text = msgInput.value.trim();
-      if (text !== "") {
-        push(messagesRef, {
-          user: "mahfuj69",
-          text: text,
-          time: new Date().toLocaleTimeString()
-        });
-        msgInput.value = "";
-      }
-    });
-
-    onChildAdded(messagesRef, (data) => {
-      const msg = data.val();
-      const div = document.createElement("div");
-      div.classList.add("message");
-      div.innerHTML = `<strong>${msg.user}:</strong> ${msg.text} <span class="time">${msg.time}</span>`;
-      messagesDiv.appendChild(div);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-  </script>
-
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
+      font-family: "Roboto", sans-serif;
+      background: #e5ddd5;
       display: flex;
       flex-direction: column;
       height: 100vh;
+      overflow: hidden;
     }
 
-    h2 {
+    header {
+      background: #0088cc;
+      color: #fff;
       text-align: center;
-      background: #1f1f1f;
-      padding: 10px;
-      margin: 0;
-      color: #ffcc00;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: 600;
     }
 
     #messages {
@@ -75,31 +30,44 @@
       padding: 10px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
     }
 
-    .message {
-      background: #1e1e1e;
-      padding: 8px 10px;
-      border-radius: 10px;
+    .msg {
       max-width: 75%;
+      padding: 10px 14px;
+      margin: 5px 0;
+      border-radius: 18px;
+      line-height: 1.4;
       word-wrap: break-word;
+      display: inline-block;
+      font-size: 15px;
     }
 
-    .message strong {
-      color: #ffcc00;
+    .mine {
+      align-self: flex-end;
+      background: #dcf8c6;
+      border-bottom-right-radius: 2px;
+    }
+
+    .theirs {
+      align-self: flex-start;
+      background: #fff;
+      border-bottom-left-radius: 2px;
     }
 
     .time {
-      font-size: 0.8em;
-      color: #aaa;
-      float: right;
+      display: block;
+      text-align: right;
+      font-size: 11px;
+      color: #777;
+      margin-top: 3px;
     }
 
-    #msgForm {
+    form {
       display: flex;
       padding: 8px;
-      background: #1f1f1f;
+      background: #f0f0f0;
+      border-top: 1px solid #ccc;
       position: sticky;
       bottom: 0;
     }
@@ -109,24 +77,30 @@
       padding: 10px;
       border: none;
       border-radius: 20px;
-      outline: none;
       font-size: 16px;
+      outline: none;
       margin-right: 8px;
     }
 
     #sendBtn {
-      background: #ffcc00;
+      background: #0088cc;
+      color: white;
       border: none;
       border-radius: 20px;
       padding: 10px 16px;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #sendBtn:hover {
+      background: #007ab8;
     }
 
     @media (max-width: 600px) {
-      h2 {
-        font-size: 1.2em;
-        padding: 8px;
+      header {
+        font-size: 16px;
+        padding: 10px;
       }
       #msgInput {
         font-size: 14px;
@@ -134,20 +108,71 @@
       #sendBtn {
         padding: 8px 12px;
       }
-      .message {
-        font-size: 15px;
+      .msg {
+        font-size: 14px;
       }
     }
   </style>
 </head>
 <body>
-  <h2>💬 Chat With Me</h2>
-
+  <header>💬 Chat With Me</header>
   <div id="messages"></div>
 
   <form id="msgForm">
     <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
-    <button id="sendBtn">Send</button>
+    <button id="sendBtn" type="submit">Send</button>
   </form>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded,
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCqgCqfJwKkDTM7K5hgcB3QoG1yZa7Z4Qg",
+      authDomain: "chat-with-me-69.firebaseapp.com",
+      databaseURL: "https://chat-with-me-69-default-rtdb.firebaseio.com",
+      projectId: "chat-with-me-69",
+      storageBucket: "chat-with-me-69.appspot.com",
+      messagingSenderId: "792582367915",
+      appId: "1:792582367915:web:a6a0c9e5696b1fd873bf1b",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const messagesRef = ref(db, "messages");
+
+    const messagesDiv = document.getElementById("messages");
+    const msgForm = document.getElementById("msgForm");
+    const msgInput = document.getElementById("msgInput");
+
+    const username = "mahfuj69"; // your username
+
+    msgForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = msgInput.value.trim();
+      if (!text) return;
+      push(messagesRef, {
+        user: username,
+        text: text,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      });
+      msgInput.value = "";
+    });
+
+    onChildAdded(messagesRef, (data) => {
+      const msg = data.val();
+      const div = document.createElement("div");
+      div.classList.add("msg");
+      div.classList.add(msg.user === username ? "mine" : "theirs");
+      div.innerHTML = `${msg.text}<span class="time">${msg.time}</span>`;
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  </script>
 </body>
 </html>
