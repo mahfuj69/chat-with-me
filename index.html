@@ -1,92 +1,100 @@
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #0e1621;
-    color: white;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat With Me</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 80px; /* keeps space above input bar */
-  }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0e1621;
+      color: white;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-  .message {
-    margin: 6px 0;
-    max-width: 80%;
-    padding: 10px;
-    border-radius: 10px;
-    word-wrap: break-word;
-  }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 90px; /* keep last messages visible above input */
+    }
 
-  .me {
-    background-color: #1e90ff;
-    align-self: flex-end;
-  }
+    .message {
+      margin: 6px 0;
+      max-width: 80%;
+      padding: 10px;
+      border-radius: 10px;
+      word-wrap: break-word;
+    }
 
-  .other {
-    background-color: #2a2f32;
-    align-self: flex-start;
-  }
+    .me {
+      background-color: #1e90ff;
+      align-self: flex-end;
+    }
 
-  /* Input bar stays above system UI */
-  #inputArea {
-    position: fixed;
-    bottom: env(safe-area-inset-bottom, 0);
-    left: 0;
-    right: 0;
-    display: flex;
-    padding: 12px;
-    background: #17212b;
-    align-items: center;
-    border-top: 1px solid #222c3b;
-    box-sizing: border-box;
-  }
+    .other {
+      background-color: #2a2f32;
+      align-self: flex-start;
+    }
 
-  #messageInput {
-    flex: 1;
-    padding: 14px;
-    border: none;
-    border-radius: 25px;
-    outline: none;
-    background: #222c3b;
-    color: white;
-    font-size: 16px;
-  }
+    #inputArea {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      padding: 12px;
+      background: #17212b;
+      align-items: center;
+      border-top: 1px solid #222c3b;
+      z-index: 10;
+    }
 
-  #sendBtn {
-    margin-left: 10px;
-    background: #1e90ff;
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    color: white;
-    font-size: 22px;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  @media (max-width: 600px) {
     #messageInput {
-      font-size: 18px;
-      padding: 16px;
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 25px;
+      outline: none;
+      background: #222c3b;
+      color: white;
+      font-size: 16px;
     }
-    #sendBtn {
-      width: 54px;
-      height: 54px;
-    }
-  }
-</style>
 
+    #sendBtn {
+      margin-left: 10px;
+      background: #1e90ff;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      #messageInput {
+        font-size: 18px;
+        padding: 16px;
+      }
+      #sendBtn {
+        width: 54px;
+        height: 54px;
+      }
+    }
+  </style>
+</head>
 <body>
   <div id="messages"></div>
 
@@ -94,4 +102,60 @@
     <input id="messageInput" type="text" placeholder="Type a message..." />
     <button id="sendBtn">➤</button>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcp0zUPYeODb_JJMWyKNxQpcaW7c2mZM8",
+      authDomain: "chat-with-me-1aa70.firebaseapp.com",
+      databaseURL: "https://chat-with-me-1aa70-default-rtdb.firebaseio.com",
+      projectId: "chat-with-me-1aa70",
+      storageBucket: "chat-with-me-1aa70.firebasestorage.app",
+      messagingSenderId: "1042127185759",
+      appId: "1:1042127185759:web:4f6f1b5705f05663f8b8ea",
+      measurementId: "G-3V2BNKNTYH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const username = localStorage.getItem("username") || "User" + Math.floor(Math.random() * 10000);
+    localStorage.setItem("username", username);
+
+    const messagesRef = ref(db, "messages");
+
+    const messagesDiv = document.getElementById("messages");
+    const input = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    sendBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (text === "") return;
+      push(messagesRef, { username, text, time: Date.now() });
+      input.value = "";
+    }
+
+    onChildAdded(messagesRef, (snapshot) => {
+      const msg = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message");
+      msgDiv.classList.add(msg.username === username ? "me" : "other");
+      msgDiv.textContent = `${msg.username}: ${msg.text}`;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    // Fix auto scroll when virtual keyboard opens on mobile
+    window.addEventListener("resize", () => {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  </script>
 </body>
+</html>
