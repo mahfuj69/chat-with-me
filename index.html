@@ -15,6 +15,16 @@
       height: 100vh;
     }
 
+    #timer {
+      text-align: center;
+      padding: 10px;
+      background-color: #111;
+      border-bottom: 1px solid #333;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #ffcc00;
+    }
+
     #messages {
       flex: 1;
       overflow-y: auto;
@@ -81,6 +91,7 @@
   </style>
 </head>
 <body>
+  <div id="timer">Loading chat timer...</div>
   <div id="messages"></div>
   <div id="inputArea">
     <input id="messageInput" type="text" placeholder="Type a message..." />
@@ -89,7 +100,15 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded,
+      remove,
+      get,
+      set,
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCcp0zUPYeODb_JJMWyKNxQpcaW7c2mZM8",
@@ -99,18 +118,19 @@
       storageBucket: "chat-with-me-1aa70.firebasestorage.app",
       messagingSenderId: "1042127185759",
       appId: "1:1042127185759:web:4f6f1b5705f05663f8b8ea",
-      measurementId: "G-3V2BNKNTYH"
+      measurementId: "G-3V2BNKNTYH",
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const messagesRef = ref(db, "messages");
+    const resetRef = ref(db, "resetTime");
 
     // Generate consistent local username and color
     let username = localStorage.getItem("username");
     let userColor = localStorage.getItem("userColor");
-
     const colors = ["#ff4747", "#4d88ff", "#ffcc00", "#66ff99", "#ff66ff", "#00ffff"];
-    
+
     if (!username) {
       username = "User" + Math.floor(Math.random() * 1000);
       localStorage.setItem("username", username);
@@ -120,10 +140,46 @@
       localStorage.setItem("userColor", userColor);
     }
 
-    const messagesRef = ref(db, "messages");
+    const messagesDiv = document.getElementById("messages");
+    const timerDiv = document.getElementById("timer");
 
+    // Listen for chat reset timer
+    async function setupResetTimer() {
+      const snapshot = await get(resetRef);
+      let resetTime = snapshot.exists() ? snapshot.val() : null;
+
+      // If reset time not found, set it now
+      if (!resetTime) {
+        resetTime = Date.now();
+        await set(resetRef, resetTime);
+      }
+
+      const interval = setInterval(async () => {
+        const now = Date.now();
+        const elapsed = now - resetTime;
+        const remaining = 24 * 60 * 60 * 1000 - elapsed;
+
+        if (remaining <= 0) {
+          // Time up → clear messages + reset timer
+          await remove(messagesRef);
+          const newResetTime = Date.now();
+          await set(resetRef, newResetTime);
+          resetTime = newResetTime;
+          timerDiv.textContent = "Chat reset!";
+        } else {
+          const hrs = Math.floor(remaining / (1000 * 60 * 60));
+          const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+          const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+          timerDiv.textContent = `Chat resets in ${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        }
+      }, 1000);
+    }
+
+    setupResetTimer();
+
+    // Sending messages
     document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    document.getElementById("messageInput").addEventListener("keypress", e => {
+    document.getElementById("messageInput").addEventListener("keypress", (e) => {
       if (e.key === "Enter") sendMessage();
     });
 
@@ -136,7 +192,7 @@
       }
     }
 
-    const messagesDiv = document.getElementById("messages");
+    // Receiving messages
     onChildAdded(messagesRef, (snapshot) => {
       const msg = snapshot.val();
       const msgDiv = document.createElement("div");
